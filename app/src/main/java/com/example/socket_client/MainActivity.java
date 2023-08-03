@@ -1,5 +1,9 @@
 package com.example.socket_client;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -11,6 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +47,13 @@ public class MainActivity extends AppCompatActivity {
         etServerPort = findViewById(R.id.edtServerPort);
         buttonClientConnect = findViewById(R.id.btnConnect);
         etSendMessageToServer = findViewById(R.id.etSendMessageToServer);
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("notification", "notification", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
     }//on create
 
     public void onClickConnect(View view) {
@@ -69,11 +83,31 @@ public class MainActivity extends AppCompatActivity {
                     while ((messageFromServer = br_input.readLine()) != null) {
                         final String messageFinal = messageFromServer;
                         Log.d("TAG", "run: " + messageFinal);
-//
+                        if (messageFinal != null) {
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, "notification");
+                            builder.setContentTitle("Message from Server");
+                            builder.setContentText(messageFinal);
+                            builder.setSmallIcon(R.drawable.baseline_notifications_active_24);
+                            builder.setAutoCancel(true);
+
+                            NotificationManagerCompat managerCompat = NotificationManagerCompat.from(MainActivity.this);
+                            if (ActivityCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                // TODO: Consider calling
+                                //    ActivityCompat#requestPermissions
+                                // here to request the missing permissions, and then overriding
+                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                //                                          int[] grantResults)
+                                // to handle the case where the user grants the permission. See the documentation
+                                // for ActivityCompat#requestPermissions for more details.
+                                return;
+                            }
+                            managerCompat.notify(1, builder.build());
+                        }
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 tvShowMessage.setText("Message from server: " + messageFinal);
+
                             }
                         });
                     }

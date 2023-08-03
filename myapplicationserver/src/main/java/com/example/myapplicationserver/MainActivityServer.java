@@ -1,7 +1,14 @@
 package com.example.myapplicationserver;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -42,6 +49,12 @@ public class MainActivityServer extends AppCompatActivity {
 
         tvServerName.setText(serverIP);
         tvServerPort.setText(String.valueOf(serverPort));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("notification", "notification", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
     }//on create
 
 
@@ -184,6 +197,26 @@ public class MainActivityServer extends AppCompatActivity {
                     while ((messageFromClient = br_input.readLine()) != null) {
                         // Hiển thị tin nhắn từ Client lên giao diện
                         final String finalMessage = messageFromClient;
+                        if (finalMessage != null){
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivityServer.this, "notification");
+                            builder.setContentTitle("Message from Client");
+                            builder.setContentText(finalMessage);
+                            builder.setSmallIcon(R.drawable.baseline_notifications_active_24);
+                            builder.setAutoCancel(true);
+
+                            NotificationManagerCompat managerCompat = NotificationManagerCompat.from(MainActivityServer.this);
+                            if (ActivityCompat.checkSelfPermission(MainActivityServer.this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                // TODO: Consider calling
+                                //    ActivityCompat#requestPermissions
+                                // here to request the missing permissions, and then overriding
+                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                //                                          int[] grantResults)
+                                // to handle the case where the user grants the permission. See the documentation
+                                // for ActivityCompat#requestPermissions for more details.
+                                return;
+                            }
+                            managerCompat.notify(1, builder.build());
+                        }
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
